@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jeffrey's Gym | Los Baños</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+  <style>
+    :root {
+      --bg: #1d1d1f;
+      --bg-soft: #18191c;
+      --panel: #202124;
+      --panel-2: #25272b;
+      --text: #f1f3f4;
+      --text-soft: #d2d5d9;
+      --text-muted: #9aa0a6;
+      --line: rgba(255,255,255,.14);
+      --line-soft: rgba(255,255,255,.08);
+      --blue: #0b57d0;
+      --blue-soft: #a8c7fa;
+      --blue-card: #a7c3f4;
+      --yellow-card: #efd782;
+      --green-card: #9fd3a2;
+      --red-card: #e7a4a2;
+      --purple-card: #d3b8f3;
+      --gray-card: #d5d7db;
+      --shadow: 0 20px 50px rgba(0,0,0,0.28);
+      --radius-xl: 34px;
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 16px;
+      --thumb-w: 300px;
+      --thumb-h: 94px;
+      --ease: cubic-bezier(.22,.61,.36,1);
+      --topbar-h: 78px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      font-family: "Inter", sans-serif;
+      background: linear-gradient(180deg, #1d1d1f 0%, #191a1d 100%);
+      color: var(--text);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .page {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,.03), transparent 22%),
+        radial-gradient(circle at top left, rgba(11,87,208,.12), transparent 20%),
+        linear-gradient(180deg, #1d1d1f 0%, #18191c 100%);
+    }
+
+    /* Splash screen */
+    .splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background:
+        radial-gradient(circle at center, rgba(11,87,208,.18), transparent 28%),
+        linear-gradient(180deg, #1d1d1f 0%, #151619 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .9s var(--ease), visibility .9s var(--ease);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .splash-screen.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-inner {
+      text-align: center;
+      animation: splashZoom 1.2s var(--ease);
+      padding: 24px;
+    }
+
+    @keyframes splashZoom {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .splash-logo {
+      width: 118px;
+      height: 118px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 22px 50px rgba(11,87,208,.36);
+    }
+
+    .splash-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .splash-title {
+      font-size: clamp(34px, 5vw, 68px);
+      font-weight: 900;
+      letter-spacing: -.06em;
+      line-height: .95;
+      margin-bottom: 12px;
+    }
+
+    .splash-subtitle {
+      color: var(--text-soft);
+      font-size: clamp(15px, 2vw, 20px);
+      line-height: 1.6;
+    }
+
+    .site-content {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .9s var(--ease), transform .9s var(--ease);
+    }
+
+    .site-content.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Top bar */
+    .topbar {
+      min-height: var(--topbar-h);
+      border-bottom: 1px solid rgba(255,255,255,.16);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 26px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(29,29,31,.88);
+      backdrop-filter: blur(10px);
+      gap: 16px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+      flex-wrap: wrap;
+    }
+
+    .brand-dot {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 8px 22px rgba(11,87,208,.3);
+      flex: 0 0 auto;
+    }
+
+    .brand-dot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .top-link {
+      color: var(--text-soft);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: all .25s var(--ease);
+    }
+
+    .top-link:hover {
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.09);
+      color: #fff;
+    }
+
+    .top-cta {
+      border: none;
+      background: #045b9c;
+      color: #dceeff;
+      border-radius: 999px;
+      padding: 15px 22px;
+      font-size: 15px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform .25s var(--ease), filter .25s var(--ease);
+    }
+
+    .top-cta:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .main-wrap {
+      width: min(1700px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 26px 0 22px;
+    }
+
+    .carousel-stage {
+      min-height: calc(100vh - var(--topbar-h) - 30px);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      justify-content: space-between;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(350px, 480px) minmax(0, 1fr);
+      gap: 38px;
+      align-items: center;
+      min-height: 620px;
+    }
+
+    .hero-copy {
+      max-width: 100%;
+      padding-left: 10px;
+    }
+
+    .hero-copy-inner {
+      opacity: 1;
+      transform: translateY(0);
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .animate-copy-out {
+      animation: copyOut .24s ease forwards;
+    }
+
+    .animate-copy-in {
+      animation: copyIn .55s var(--ease) forwards;
+    }
+
+    @keyframes copyOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(12px); }
+    }
+
+    @keyframes copyIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--blue-soft);
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      width: fit-content;
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 4.4vw, 64px);
+      line-height: .98;
+      letter-spacing: -.06em;
+      font-weight: 900;
+      margin-bottom: 18px;
+      color: #e8eaed;
+    }
+
+    .hero-text {
+      font-size: clamp(16px, 1.35vw, 18px);
+      line-height: 1.7;
+      color: var(--text-soft);
+      margin-bottom: 14px;
+      max-width: 95%;
+    }
+
+    .hero-list {
+      list-style: none;
+      margin: 18px 0 24px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-list li {
+      display: flex;
+      gap: 12px;
+      color: var(--text-soft);
+      font-size: clamp(15px, 1.2vw, 17px);
+      line-height: 1.6;
+      align-items: flex-start;
+    }
+
+    .hero-list i {
+      color: var(--blue-soft);
+      margin-top: 4px;
+      flex: 0 0 auto;
+    }
+
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #87aef6;
+      font-size: 17px;
+      font-weight: 700;
+      text-decoration: none;
+      margin: 4px 0 24px;
+      width: fit-content;
+    }
+
+    .hero-link:hover {
+      color: #b7ceff;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 800;
+      transition: all .25s var(--ease);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-width: 170px;
+    }
+
+    .btn-primary {
+      background: transparent;
+      color: #9ec3ff;
+      border: 1.4px solid rgba(158,195,255,.42);
+    }
+
+    .btn-primary:hover {
+      background: rgba(158,195,255,.08);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: #0b57d0;
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(11,87,208,.28);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    .hero-visual-wrap {
+      position: relative;
+      height: 100%;
+      min-height: 600px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-visual-shell {
+      width: min(100%, 1150px);
+      height: min(68vh, 650px);
+      min-height: 500px;
+      border-radius: 30px;
+      background: #e1e3e7;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      padding: 0;
+    }
+
+    .visual-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: scale(1.02);
+      pointer-events: none;
+    }
+
+    .visual-slide.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+      transition: opacity .55s var(--ease), transform .65s var(--ease);
+    }
+
+    .visual-overlay-fade {
+      animation: visualSwap .55s var(--ease);
+    }
+
+    @keyframes visualSwap {
+      from { opacity: 0; transform: translateY(18px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .image-stage {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.05) 0%, rgba(0,0,0,.25) 100%);
+    }
+
+    .info-card-overlay {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 24px;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      z-index: 2;
+    }
+
+    .info-card,
+    .stat-card {
+      background: rgba(24,25,28,.78);
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 16px 34px rgba(0,0,0,.18);
+    }
+
+    .info-card h3,
+    .stat-card h3 {
+      font-size: 22px;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .info-card p,
+    .stat-card p,
+    .stat-card li {
+      color: var(--text-soft);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .stat-card ul {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stat-card li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .stat-card li i {
+      color: var(--blue-soft);
+      margin-top: 4px;
+    }
+
+    .badge-bar {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      display: flex;
+      gap: 10px;
+      z-index: 3;
+      flex-wrap: wrap;
+    }
+
+    .mini-badge {
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(17,18,22,.56);
+      border: 1px solid rgba(255,255,255,.12);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Bottom nav */
+    .carousel-bottom {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding-bottom: 8px;
+    }
+
+    .thumbs-wrap {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .thumbs-track {
+      display: flex;
+      gap: 14px;
+      align-items: stretch;
+      transition: transform .45s var(--ease);
+      will-change: transform;
+    }
+
+    .thumb {
+      width: var(--thumb-w);
+      height: var(--thumb-h);
+      border-radius: 22px;
+      border: 3px solid transparent;
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 114px;
+      align-items: stretch;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+      background: #ccc;
+    }
+
+    .thumb:hover {
+      transform: translateY(-2px);
+    }
+
+    .thumb.active {
+      border-color: rgba(255,255,255,.9);
+      box-shadow:
+        0 8px 20px rgba(0,0,0,.16),
+        inset 0 0 0 1px rgba(255,255,255,.2);
+    }
+
+    .thumb.theme-blue { background: var(--blue-card); color: #1d2b44; }
+    .thumb.theme-yellow { background: var(--yellow-card); color: #2f2a1a; }
+    .thumb.theme-green { background: var(--green-card); color: #223427; }
+    .thumb.theme-red { background: var(--red-card); color: #3a2222; }
+    .thumb.theme-purple { background: var(--purple-card); color: #30233b; }
+    .thumb.theme-gray { background: var(--gray-card); color: #303235; }
+
+    .thumb-label {
+      padding: 15px 16px 14px;
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.18;
+      display: flex;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .thumb-media {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 10px 10px 0;
+    }
+
+    .thumb-mini {
+      width: 100%;
+      height: 74px;
+      border-radius: 16px;
+      background-size: cover;
+      background-position: center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
+    }
+
+    .carousel-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-right: 4px;
+    }
+
+    .nav-btn {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: none;
+      background: #005a9c;
+      color: #dceeff;
+      font-size: 22px;
+      cursor: pointer;
+      transition: transform .25s var(--ease), filter .25s var(--ease), opacity .25s var(--ease);
+      box-shadow: 0 12px 24px rgba(0,0,0,.16);
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .nav-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 22px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.08);
+    }
+
+    .footer-inner {
+      width: min(1700px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 34px 0;
+      display: grid;
+      grid-template-columns: 1.2fr .9fr .9fr .9fr;
+      gap: 24px;
+    }
+
+    .footer-box {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 22px;
+      padding: 22px;
+    }
+
+    .footer-box h4 {
+      margin-bottom: 14px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .footer-box p,
+    .footer-box a,
+    .footer-box li {
+      color: var(--text-soft);
+      line-height: 1.7;
+      text-decoration: none;
+      font-size: 15px;
+    }
+
+    .footer-box ul {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .footer-box a:hover {
+      color: #fff;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .footer-brand .brand-dot {
+      width: 48px;
+      height: 48px;
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.06);
+      padding: 16px 18px 26px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,7,10,.72);
+      backdrop-filter: blur(8px);
+      z-index: 120;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal.show {
+      display: flex;
+      animation: modalFade .3s ease;
+    }
+
+    @keyframes modalFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 580px;
+      background: linear-gradient(180deg, #1e2128, #171a20);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 28px;
+      box-shadow: 0 30px 70px rgba(0,0,0,.35);
+      padding: 26px;
+      color: #fff;
+      max-height: 92vh;
+      overflow-y: auto;
+      animation: modalUp .35s var(--ease);
+    }
+
+    @keyframes modalUp {
+      from { opacity: 0; transform: translateY(18px) scale(.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h3 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+    }
+
+    .modal-close {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .modal-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
+
+    .modal-card strong {
+      color: #fff;
+    }
+
+    .modal-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .modal-form input,
+    .modal-form select,
+    .modal-form textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: #fff;
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .modal-form input::placeholder,
+    .modal-form textarea::placeholder {
+      color: #aeb6c3;
+    }
+
+    .modal-form select option {
+      color: #111;
+    }
+
+    .modal-form input:focus,
+    .modal-form select:focus,
+    .modal-form textarea:focus {
+      border-color: rgba(168,199,250,.55);
+      box-shadow: 0 0 0 4px rgba(168,199,250,.10);
+    }
+
+    /* Responsive */
+    @media (max-width: 1350px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy {
+        padding-left: 0;
+      }
+
+      .hero-copy-inner {
+        min-height: auto;
+      }
+
+      .hero-visual-wrap {
+        min-height: 0;
+      }
+
+      .hero-visual-shell {
+        height: 62vh;
+        min-height: 460px;
+      }
+
+      .footer-inner {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .topbar {
+        padding: 14px 16px;
+      }
+
+      .topbar-left {
+        font-size: 20px;
+      }
+
+      .main-wrap,
+      .footer-inner {
+        width: min(100%, calc(100% - 20px));
+      }
+
+      .info-card-overlay {
+        grid-template-columns: 1fr;
+      }
+
+      .carousel-bottom {
+        grid-template-columns: 1fr;
+      }
+
+      .carousel-actions {
+        justify-content: flex-end;
+      }
+
+      .hero-visual-shell {
+        height: 56vh;
+        min-height: 420px;
+      }
+
+      .footer-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .topbar-right {
+        width: 100%;
+      }
+
+      .top-link {
+        padding: 8px 10px;
+      }
+
+      .top-cta {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .hero-title {
+        font-size: 34px;
+      }
+
+      .hero-text,
+      .hero-list li {
+        font-size: 15px;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        width: 100%;
+      }
+
+      .hero-visual-shell {
+        min-height: 370px;
+        height: 48vh;
+      }
+
+      .thumb {
+        width: 255px;
+        grid-template-columns: 1fr 92px;
+      }
+
+      .thumb-label {
+        font-size: 15px;
+      }
+
+      .thumb-mini {
+        height: 66px;
+      }
+
+      .nav-btn {
+        width: 56px;
+        height: 56px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-inner">
+      <div class="splash-logo">
+        <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" onerror="this.src='https://via.placeholder.com/118x118/0b57d0/ffffff?text=JG'">
+      </div>
+      <h1 class="splash-title">Jeffrey’s Gym</h1>
+      <p class="splash-subtitle">Gym • Zumba • Karate<br>Los Baños, Laguna</p>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="site-content" id="siteContent">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="brand-dot">
+            <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" onerror="this.src='https://via.placeholder.com/42x42/0b57d0/ffffff?text=JG'">
+          </div>
+          <span>Jeffrey’s Gym</span>
+        </div>
+
+        <div class="topbar-right">
+          <a href="#footer" class="top-link">Contact</a>
+          <a href="#footer" class="top-link">Location</a>
+          <a href="#footer" class="top-link">Schedule</a>
+          <button class="top-cta" onclick="openModal()">
+            <i class="fas fa-calendar-check"></i>
+            Join Jeffrey’s Gym Today
+          </button>
+        </div>
+      </header>
+
+      <main class="main-wrap">
+        <section class="carousel-stage" id="gymCarousel">
+          <div class="hero-grid">
+            <div class="hero-copy">
+              <div class="hero-copy-inner" id="heroCopy"></div>
+            </div>
+
+            <div class="hero-visual-wrap">
+              <div class="hero-visual-shell" id="heroVisual"></div>
+            </div>
+          </div>
+
+          <div class="carousel-bottom">
+            <div class="thumbs-wrap">
+              <div class="thumbs-track" id="thumbTrack"></div>
+            </div>
+
+            <div class="carousel-actions">
+              <button class="nav-btn" id="prevBtn" aria-label="Previous">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="nav-btn" id="nextBtn" aria-label="Next">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer id="footer">
+        <div class="footer-inner">
+          <div class="footer-box">
+            <div class="footer-brand">
+              <div class="brand-dot">
+                <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" onerror="this.src='https://via.placeholder.com/48x48/0b57d0/ffffff?text=JG'">
+              </div>
+              <div>
+                <h4 style="margin-bottom:4px;">Jeffrey’s Gym</h4>
+                <p>Gym • Zumba • Karate</p>
+              </div>
+            </div>
+            <p>
+              Your fitness journey starts here. Jeffrey’s Gym in Los Baños offers
+              gym training, Zumba fitness, Karate classes, flexible membership plans,
+              and a welcoming space for beginners and active members.
+            </p>
+          </div>
+
+          <div class="footer-box">
+            <h4>Programs</h4>
+            <ul>
+              <li>Gym Training</li>
+              <li>Zumba Fitness</li>
+              <li>Karate-Do</li>
+              <li>Membership Plans</li>
+              <li>Free Trial Class</li>
+            </ul>
+          </div>
+
+          <div class="footer-box">
+            <h4>Visit / Contact</h4>
+            <ul>
+              <li>Lopez Avenue, Batong Malake</li>
+              <li>Los Baños, Laguna 4030</li>
+              <li>(049) 123-4567</li>
+              <li>info@jeffreysgymlb.com</li>
+              <li>@jeffreysgymlb</li>
+            </ul>
+          </div>
+
+          <div class="footer-box">
+            <h4>Hours</h4>
+            <ul>
+              <li>Mon - Fri: 5:00 AM - 10:00 PM</li>
+              <li>Sat - Sun: 6:00 AM - 8:00 PM</li>
+              <li>Holidays: 8:00 AM - 5:00 PM</li>
+              <li><a href="#" onclick="openModal()">Apply for membership</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          © 2026 Jeffrey’s Gym Los Baños. All rights reserved.
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="applyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Start Your Journey</h3>
+        <button class="modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-card">
+        <p>
+          <i class="fas fa-map-pin" style="color:#9dccff;"></i>
+          <strong> Jeffrey’s Gym Los Baños</strong><br>
+          Lopez Avenue, Batong Malake, Los Baños, Laguna
+        </p>
+      </div>
+
+      <form class="modal-form" id="applyForm">
+        <input type="text" placeholder="Full Name" required>
+        <input type="email" placeholder="Email Address" required>
+        <input type="tel" placeholder="Phone Number" required>
+
+        <select required>
+          <option value="" disabled selected>Select your interest</option>
+          <option>Gym Training</option>
+          <option>Zumba Classes</option>
+          <option>Karate Training</option>
+          <option>Gym + Zumba</option>
+          <option>Gym + Karate</option>
+          <option>All Access</option>
+        </select>
+
+        <textarea rows="4" placeholder="Questions or preferred schedule (optional)"></textarea>
+
+        <button type="submit" class="btn-secondary" style="width:100%;">
+          <i class="fas fa-paper-plane"></i>
+          Submit Application
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const slides = [
+      {
+        theme: "blue",
+        thumb: "Gym Training",
+        eyebrow: "Jeffrey’s Gym • Main Program",
+        title: "Train stronger with our complete Gym Training setup",
+        text: "Complete gym access with premium equipment for strength training, cardio, and functional fitness in a cleaner, more modern presentation.",
+        bullets: [
+          "Free weights area (1kg - 50kg dumbbells), plate-loaded machines, cable crossover machines",
+          "Treadmills, ellipticals, bikes, rowing machines, locker rooms with showers",
+          "Operating hours: Monday - Friday 5:00 AM - 10:00 PM | Saturday - Sunday 6:00 AM - 8:00 PM"
+        ],
+        link: "Explore gym equipment",
+        primaryBtn: "Learn More",
+        secondaryBtn: "Enroll Now",
+        image: "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        badges: ["Gym Access", "Strength", "Cardio"],
+        overlayTitle: "Gym Training",
+        overlayText: "Complete gym access with premium equipment for strength training, cardio, and functional fitness.",
+        statsTitle: "Highlights",
+        stats: [
+          "Free weights area (1kg - 50kg dumbbells)",
+          "Plate-loaded machines and cable crossover machines",
+          "Locker rooms with showers"
+        ]
+      },
+      {
+        theme: "yellow",
+        thumb: "Zumba Fitness",
+        eyebrow: "Jeffrey’s Gym • Group Fitness",
+        title: "Dance your way to fitness with energetic Zumba classes",
+        text: "High-energy Zumba sessions designed to keep workouts fun, social, and effective for all levels.",
+        bullets: [
+          "Burn around 500-800 calories per session",
+          "Licensed Zumba instructors with upbeat Latin & international music",
+          "Monday, Wednesday, Friday 6:00 PM - 7:00 PM and Saturday 9:00 AM - 10:00 AM"
+        ],
+        link: "See class features",
+        primaryBtn: "View Schedule",
+        secondaryBtn: "Join Zumba",
+        image: "https://images.pexels.com/photos/3775566/pexels-photo-3775566.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        badges: ["Dance Cardio", "Group Class", "Fun Workout"],
+        overlayTitle: "Zumba Fitness",
+        overlayText: "Dance-based workouts that make fitness more fun, more energetic, and easier to stay consistent with.",
+        statsTitle: "Class Features",
+        stats: [
+          "Licensed Zumba instructors",
+          "No experience needed",
+          "Maximum 25 students per class"
+        ]
+      },
+      {
+        theme: "green",
+        thumb: "Karate-Do",
+        eyebrow: "Jeffrey’s Gym • Martial Arts",
+        title: "Build discipline, confidence, and self-defense skills",
+        text: "Traditional Shotokan Karate training guided by experienced instructors for beginners and advancing students.",
+        bullets: [
+          "Black belt instructors (JKA affiliated)",
+          "Kihon, Kata, Kumite, belt progression system",
+          "Tuesday & Thursday 5:00 PM - 6:30 PM | Saturday 8:00 AM - 9:30 AM"
+        ],
+        link: "Learn karate details",
+        primaryBtn: "See Training",
+        secondaryBtn: "Start Karate",
+        image: "https://images.pexels.com/photos/7045584/pexels-photo-7045584.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        badges: ["Shotokan", "Self-Defense", "Discipline"],
+        overlayTitle: "Karate-Do",
+        overlayText: "Learn self-defense, discipline, confidence, and traditional Karate foundations in a structured program.",
+        statsTitle: "Training Includes",
+        stats: [
+          "Kihon, Kata, Kumite",
+          "Belt progression system",
+          "Competition training available"
+        ]
+      },
+      {
+        theme: "red",
+        thumb: "Membership Plans",
+        eyebrow: "Jeffrey’s Gym • Pricing",
+        title: "Choose a membership plan that fits your goals",
+        text: "Flexible plans for gym access, Zumba classes, Karate training, or full all-access membership.",
+        bullets: [
+          "Gym Only - ₱1,200/month",
+          "Zumba + Gym - ₱1,800/month | Karate + Gym - ₱1,800/month",
+          "All Access - ₱2,500/month with broader inclusions"
+        ],
+        link: "Check pricing options",
+        primaryBtn: "Compare Plans",
+        secondaryBtn: "Choose Plan",
+        image: "https://images.pexels.com/photos/4164762/pexels-photo-4164762.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        badges: ["Flexible Plans", "Affordable", "All Access"],
+        overlayTitle: "Membership Plans",
+        overlayText: "Choose from Gym Only, Zumba + Gym, Karate + Gym, or All Access based on your fitness goals.",
+        statsTitle: "Popular Options",
+        stats: [
+          "Gym Only - ₱1,200/month",
+          "Zumba + Gym - ₱1,800/month",
+          "All Access - ₱2,500/month"
+        ]
+      },
+      {
+        theme: "purple",
+        thumb: "Weekly Schedule",
+        eyebrow: "Jeffrey’s Gym • Schedule",
+        title: "See gym hours, classes, and weekly training times easily",
+        text: "Get quick access to your weekly gym hours, Zumba sessions, and Karate class schedule in one section.",
+        bullets: [
+          "Gym: Mon - Fri 5:00 AM - 10:00 PM | Sat - Sun 6:00 AM - 8:00 PM",
+          "Zumba: Monday, Wednesday, Friday 6:00 PM | Saturday 9:00 AM",
+          "Karate: Tuesday & Thursday 5:00 PM | Saturday 8:00 AM"
+        ],
+        link: "View full schedule",
+        primaryBtn: "See Schedule",
+        secondaryBtn: "Book Trial",
+        image: "https://images.pexels.com/photos/4498606/pexels-photo-4498606.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        badges: ["Gym Hours", "Class Times", "Weekly Plan"],
+        overlayTitle: "Weekly Schedule",
+        overlayText: "Plan your week better with a clear schedule for training, classes, and weekend sessions.",
+        statsTitle: "Available Times",
+        stats: [
+          "Morning and evening training access",
+          "Weekend Zumba and Karate sessions",
+          "Consistent weekly class schedule"
+        ]
+      },
+      {
+        theme: "gray",
+        thumb: "Location & Contact",
+        eyebrow: "Jeffrey’s Gym • Visit Us",
+        title: "Visit our gym and contact us for classes or inquiries",
+        text: "Find our location, operating hours, and contact details quickly if you want to visit or sign up.",
+        bullets: [
+          "Lopez Avenue, Batong Malake, Los Baños, Laguna 4030",
+          "Contact: (049) 123-4567 | info@jeffreysgymlb.com",
+          "Facebook / IG: @jeffreysgymlb"
+        ],
+        link: "See contact details",
+        primaryBtn: "Get Directions",
+        secondaryBtn: "Contact Us",
+        image: "https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        badges: ["Visit", "Contact", "Directions"],
+        overlayTitle: "Location & Contact",
+        overlayText: "Visit Jeffrey’s Gym in Los Baños and reach out for memberships, free trials, schedules, or questions.",
+        statsTitle: "Quick Info",
+        stats: [
+          "Lopez Avenue, Batong Malake",
+          "(049) 123-4567",
+          "info@jeffreysgymlb.com"
+        ]
+      }
+    ];
+
+    const splashScreen = document.getElementById("splashScreen");
+    const siteContent = document.getElementById("siteContent");
+    const heroCopy = document.getElementById("heroCopy");
+    const heroVisual = document.getElementById("heroVisual");
+    const thumbTrack = document.getElementById("thumbTrack");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    let currentIndex = 0;
+    let autoSlide;
+
+    function renderCopy(index, animate = true) {
+      const slide = slides[index];
+
+      const html = `
+        <div class="eyebrow"><i class="fas fa-sparkles"></i>${slide.eyebrow}</div>
+        <h1 class="hero-title">${slide.title}</h1>
+        <p class="hero-text">${slide.text}</p>
+        <ul class="hero-list">
+          ${slide.bullets.map(item => `<li><i class="fas fa-check-circle"></i><span>${item}</span></li>`).join("")}
+        </ul>
+        <a href="#" class="hero-link">${slide.link} <i class="fas fa-arrow-up-right-from-square"></i></a>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="openModal()">${slide.primaryBtn}</button>
+          <button class="btn-secondary" onclick="openModal()">${slide.secondaryBtn}</button>
+        </div>
+      `;
+
+      if (animate) {
+        heroCopy.classList.remove("animate-copy-in");
+        heroCopy.classList.add("animate-copy-out");
+
+        setTimeout(() => {
+          heroCopy.innerHTML = html;
+          heroCopy.classList.remove("animate-copy-out");
+          heroCopy.classList.add("animate-copy-in");
+        }, 180);
+      } else {
+        heroCopy.innerHTML = html;
+      }
+    }
+
+    function renderVisual(index) {
+      const slide = slides[index];
+
+      heroVisual.innerHTML = `
+        <div class="visual-slide active visual-overlay-fade">
+          <div class="image-stage">
+            <img src="${slide.image}" alt="${slide.thumb}">
+            <div class="image-overlay"></div>
+
+            <div class="badge-bar">
+              ${slide.badges.map(badge => `<div class="mini-badge">${badge}</div>`).join("")}
+            </div>
+
+            <div class="info-card-overlay">
+              <div class="info-card">
+                <h3>${slide.overlayTitle}</h3>
+                <p>${slide.overlayText}</p>
+              </div>
+              <div class="stat-card">
+                <h3>${slide.statsTitle}</h3>
+                <ul>
+                  ${slide.stats.map(item => `<li><i class="fas fa-check-circle"></i><span>${item}</span></li>`).join("")}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderThumbs() {
+      thumbTrack.innerHTML = slides.map((slide, index) => `
+        <button class="thumb theme-${slide.theme} ${index === currentIndex ? "active" : ""}" data-index="${index}" aria-label="${slide.thumb}">
+          <div class="thumb-label">${slide.thumb}</div>
+          <div class="thumb-media">
+            <div class="thumb-mini" style="background-image:url('${slide.image}')"></div>
+          </div>
+        </button>
+      `).join("");
+
+      [...thumbTrack.querySelectorAll(".thumb")].forEach(btn => {
+        btn.addEventListener("click", () => {
+          goToSlide(Number(btn.dataset.index), true);
+        });
+      });
+    }
+
+    function updateButtons() {
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex === slides.length - 1;
+    }
+
+    function centerActiveThumb() {
+      const activeThumb = thumbTrack.querySelector(`.thumb[data-index="${currentIndex}"]`);
+      if (!activeThumb) return;
+
+      const wrap = thumbTrack.parentElement;
+      const target = activeThumb.offsetLeft - (wrap.clientWidth / 2) + (activeThumb.clientWidth / 2);
+      const maxTranslate = Math.max(0, thumbTrack.scrollWidth - wrap.clientWidth);
+      const clamped = Math.max(0, Math.min(target, maxTranslate));
+      thumbTrack.style.transform = `translateX(${-clamped}px)`;
+    }
+
+    function goToSlide(index, resetTimer = false) {
+      currentIndex = Math.max(0, Math.min(index, slides.length - 1));
+      renderCopy(currentIndex);
+      renderVisual(currentIndex);
+      renderThumbs();
+      updateButtons();
+      setTimeout(centerActiveThumb, 30);
+
+      if (resetTimer) restartAutoSlide();
+    }
+
+    function nextSlide() {
+      currentIndex = (currentIndex + 1) % slides.length;
+      goToSlide(currentIndex);
+    }
+
+    function prevSlideManual() {
+      if (currentIndex === 0) {
+        currentIndex = slides.length - 1;
+      } else {
+        currentIndex--;
+      }
+      goToSlide(currentIndex, true);
+    }
+
+    function nextSlideManual() {
+      if (currentIndex === slides.length - 1) {
+        currentIndex = 0;
+      } else {
+        currentIndex++;
+      }
+      goToSlide(currentIndex, true);
+    }
+
+    function startAutoSlide() {
+      autoSlide = setInterval(() => {
+        nextSlide();
+      }, 5000);
+    }
+
+    function restartAutoSlide() {
+      clearInterval(autoSlide);
+      startAutoSlide();
+    }
+
+    prevBtn.addEventListener("click", prevSlideManual);
+    nextBtn.addEventListener("click", nextSlideManual);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") prevSlideManual();
+      if (e.key === "ArrowRight") nextSlideManual();
+    });
+
+    window.addEventListener("resize", centerActiveThumb);
+
+    function openModal() {
+      document.getElementById("applyModal").classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+      document.getElementById("applyModal").classList.remove("show");
+      document.body.style.overflow = "auto";
+    }
+
+    window.addEventListener("click", (e) => {
+      const modal = document.getElementById("applyModal");
+      if (e.target === modal) closeModal();
+    });
+
+    document.getElementById("applyForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert("Thank you! We will contact you within 24 hours.");
+      closeModal();
+    });
+
+    renderCopy(currentIndex, false);
+    renderVisual(currentIndex);
+    renderThumbs();
+    updateButtons();
+    setTimeout(centerActiveThumb, 80);
+    startAutoSlide();
+
+    setTimeout(() => {
+      splashScreen.classList.add("hide");
+      siteContent.classList.add("show");
+    }, 5000);
+  </script>
+</body>
+</html>
