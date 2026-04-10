@@ -1,3 +1,127 @@
+<?php
+require_once 'config.php';
+
+// Check if prices table exists, if not, create it
+$table_check = $conn->query("SHOW TABLES LIKE 'prices'");
+if ($table_check->num_rows == 0) {
+    // Create prices table
+    $create_prices = "CREATE TABLE IF NOT EXISTS `prices` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `interest_name` VARCHAR(100) NOT NULL,
+        `price` DECIMAL(10,2) NOT NULL,
+        `description` TEXT,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `unique_interest` (`interest_name`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    $conn->query($create_prices);
+    
+    // Insert updated prices
+    $default_prices = [
+        'Regular Membership' => 700,
+        'Student/Senior Rate' => 550,
+        'Non-Membership Promo' => 700,
+        'Weekly Pass' => 350,
+        'Single Session' => 100
+    ];
+    
+    $insert_sql = "INSERT INTO `prices` (`interest_name`, `price`, `description`) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($insert_sql);
+    $descriptions = [
+        'Regular Membership' => 'Standard monthly gym membership - full access to all facilities',
+        'Student/Senior Rate' => 'Discounted rate for students and senior citizens (valid ID required)',
+        'Non-Membership Promo' => 'Promotional rate for non-membership access',
+        'Weekly Pass' => '7-day gym access pass',
+        'Single Session' => 'Pay per visit - single gym session'
+    ];
+    foreach ($default_prices as $name => $price) {
+        $desc = $descriptions[$name];
+        $stmt->bind_param("sds", $name, $price, $desc);
+        $stmt->execute();
+    }
+    
+    // Create applications table
+    $create_applications = "CREATE TABLE IF NOT EXISTS `applications` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `fullname` VARCHAR(100) NOT NULL,
+        `email` VARCHAR(100) NOT NULL,
+        `phone` VARCHAR(20) NOT NULL,
+        `interest` VARCHAR(100) NOT NULL,
+        `price` DECIMAL(10,2) NOT NULL,
+        `message` TEXT,
+        `status` ENUM('pending', 'approved', 'rejected', 'contacted') DEFAULT 'pending',
+        `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `processed_at` TIMESTAMP NULL DEFAULT NULL,
+        `admin_notes` TEXT,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    $conn->query($create_applications);
+    
+    // Create members table
+    $create_members = "CREATE TABLE IF NOT EXISTS `members` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `application_id` INT(11),
+        `member_code` VARCHAR(50) UNIQUE NOT NULL,
+        `fullname` VARCHAR(100) NOT NULL,
+        `email` VARCHAR(100) NOT NULL,
+        `phone` VARCHAR(20) NOT NULL,
+        `membership_type` VARCHAR(100) NOT NULL,
+        `start_date` DATE NOT NULL,
+        `end_date` DATE NOT NULL,
+        `status` ENUM('active', 'expired', 'cancelled') DEFAULT 'active',
+        `registered_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    $conn->query($create_members);
+    
+    // Create payments table
+    $create_payments = "CREATE TABLE IF NOT EXISTS `payments` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `member_id` INT(11) NOT NULL,
+        `amount` DECIMAL(10,2) NOT NULL,
+        `payment_date` DATE NOT NULL,
+        `payment_method` ENUM('cash', 'bank_transfer', 'gcash', 'credit_card') DEFAULT 'cash',
+        `reference_number` VARCHAR(100),
+        `status` ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+        `notes` TEXT,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    $conn->query($create_payments);
+}
+
+// Get prices from database
+$prices = [];
+$prices_sql = "SELECT interest_name, price FROM prices ORDER BY price";
+$prices_result = $conn->query($prices_sql);
+if ($prices_result && $prices_result->num_rows > 0) {
+    while ($row = $prices_result->fetch_assoc()) {
+        $prices[$row['interest_name']] = $row['price'];
+    }
+} else {
+    // Fallback default prices if no data in database
+    $prices = [
+        'Regular Membership' => 700,
+        'Student/Senior Rate' => 550,
+        'Non-Membership Promo' => 700,
+        'Weekly Pass' => 350,
+        'Single Session' => 100
+    ];
+}
+
+// Get success/error messages from URL parameters
+$success_message = '';
+$error_message = '';
+
+if (isset($_GET['success']) && $_GET['success'] == 1) {
+    $success_message = 'Application submitted successfully! We will contact you within 24 hours.';
+}
+
+if (isset($_GET['error'])) {
+    $error_message = htmlspecialchars($_GET['error']);
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +135,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
+    /* [Previous CSS styles remain exactly the same - too long to repeat] */
+    /* Use the CSS from your original index.php */
     :root {
       --bg: #1d1d1f;
       --bg-soft: #18191c;
@@ -75,7 +201,6 @@
         linear-gradient(180deg, #1d1d1f 0%, #18191c 100%);
     }
 
-    /* Splash screen */
     .splash-screen {
       position: fixed;
       inset: 0;
@@ -154,7 +279,6 @@
       transform: translateY(0);
     }
 
-    /* Top bar */
     .topbar {
       min-height: var(--topbar-h);
       border-bottom: 1px solid rgba(255,255,255,.16);
@@ -236,6 +360,48 @@
     .top-cta:hover {
       transform: translateY(-2px);
       filter: brightness(1.08);
+    }
+
+    .alert {
+      position: fixed;
+      top: 90px;
+      right: 20px;
+      z-index: 1000;
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      animation: slideIn 0.3s ease;
+      max-width: 350px;
+    }
+
+    .alert-success {
+      background: linear-gradient(135deg, #1e4620, #2e7d32);
+      border-left: 4px solid #4caf50;
+      color: #fff;
+    }
+
+    .alert-error {
+      background: linear-gradient(135deg, #461e1e, #c62828);
+      border-left: 4px solid #ef5350;
+      color: #fff;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .alert-close {
+      float: right;
+      margin-left: 15px;
+      cursor: pointer;
+      font-weight: bold;
     }
 
     .main-wrap {
@@ -549,7 +715,6 @@
       backdrop-filter: blur(10px);
     }
 
-    /* Bottom nav */
     .carousel-bottom {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -662,7 +827,6 @@
       cursor: not-allowed;
     }
 
-    /* Footer */
     footer {
       margin-top: 22px;
       border-top: 1px solid rgba(255,255,255,.08);
@@ -730,7 +894,6 @@
       font-size: 14px;
     }
 
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -845,29 +1008,45 @@
       box-shadow: 0 0 0 4px rgba(168,199,250,.10);
     }
 
-    /* Responsive */
+    .price-display {
+      background: rgba(11,87,208,.2);
+      border: 1px solid rgba(11,87,208,.3);
+      border-radius: 16px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .price-display .label {
+      font-weight: 600;
+      color: var(--text-soft);
+    }
+
+    .price-display .value {
+      font-size: 24px;
+      font-weight: 800;
+      color: #a8c7fa;
+    }
+
     @media (max-width: 1350px) {
       .hero-grid {
         grid-template-columns: 1fr;
       }
-
       .hero-copy {
         padding-left: 0;
       }
-
       .hero-copy-inner {
         min-height: auto;
       }
-
       .hero-visual-wrap {
         min-height: 0;
       }
-
       .hero-visual-shell {
         height: 62vh;
         min-height: 460px;
       }
-
       .footer-inner {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -877,33 +1056,26 @@
       .topbar {
         padding: 14px 16px;
       }
-
       .topbar-left {
         font-size: 20px;
       }
-
       .main-wrap,
       .footer-inner {
         width: min(100%, calc(100% - 20px));
       }
-
       .info-card-overlay {
         grid-template-columns: 1fr;
       }
-
       .carousel-bottom {
         grid-template-columns: 1fr;
       }
-
       .carousel-actions {
         justify-content: flex-end;
       }
-
       .hero-visual-shell {
         height: 56vh;
         min-height: 420px;
       }
-
       .footer-inner {
         grid-template-columns: 1fr;
       }
@@ -914,52 +1086,41 @@
         flex-direction: column;
         align-items: flex-start;
       }
-
       .topbar-right {
         width: 100%;
       }
-
       .top-link {
         padding: 8px 10px;
       }
-
       .top-cta {
         width: 100%;
         justify-content: center;
       }
-
       .hero-title {
         font-size: 34px;
       }
-
       .hero-text,
       .hero-list li {
         font-size: 15px;
       }
-
       .btn-primary,
       .btn-secondary {
         width: 100%;
       }
-
       .hero-visual-shell {
         min-height: 370px;
         height: 48vh;
       }
-
       .thumb {
         width: 255px;
         grid-template-columns: 1fr 92px;
       }
-
       .thumb-label {
         font-size: 15px;
       }
-
       .thumb-mini {
         height: 66px;
       }
-
       .nav-btn {
         width: 56px;
         height: 56px;
@@ -973,7 +1134,7 @@
       <div class="splash-logo">
         <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" onerror="this.src='https://via.placeholder.com/118x118/0b57d0/ffffff?text=JG'">
       </div>
-      <h1 class="splash-title">Jeffrey’s Gym</h1>
+      <h1 class="splash-title">Jeffrey's Gym</h1>
       <p class="splash-subtitle">Gym • Zumba • Karate<br>Los Baños, Laguna</p>
     </div>
   </div>
@@ -985,7 +1146,7 @@
           <div class="brand-dot">
             <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" onerror="this.src='https://via.placeholder.com/42x42/0b57d0/ffffff?text=JG'">
           </div>
-          <span>Jeffrey’s Gym</span>
+          <span>Jeffrey's Gym</span>
         </div>
 
         <div class="topbar-right">
@@ -994,10 +1155,36 @@
           <a href="#footer" class="top-link">Schedule</a>
           <button class="top-cta" onclick="openModal()">
             <i class="fas fa-calendar-check"></i>
-            Join Jeffrey’s Gym Today
+            Join Jeffrey's Gym Today
           </button>
         </div>
       </header>
+
+      <?php if ($success_message): ?>
+      <div class="alert alert-success" id="successAlert">
+        <span class="alert-close" onclick="this.parentElement.style.display='none'">&times;</span>
+        <?php echo $success_message; ?>
+      </div>
+      <script>
+        setTimeout(function() {
+          var alert = document.getElementById('successAlert');
+          if (alert) alert.style.display = 'none';
+        }, 5000);
+      </script>
+      <?php endif; ?>
+
+      <?php if ($error_message): ?>
+      <div class="alert alert-error" id="errorAlert">
+        <span class="alert-close" onclick="this.parentElement.style.display='none'">&times;</span>
+        Error: <?php echo $error_message; ?>
+      </div>
+      <script>
+        setTimeout(function() {
+          var alert = document.getElementById('errorAlert');
+          if (alert) alert.style.display = 'none';
+        }, 5000);
+      </script>
+      <?php endif; ?>
 
       <main class="main-wrap">
         <section class="carousel-stage" id="gymCarousel">
@@ -1036,12 +1223,12 @@
                 <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" onerror="this.src='https://via.placeholder.com/48x48/0b57d0/ffffff?text=JG'">
               </div>
               <div>
-                <h4 style="margin-bottom:4px;">Jeffrey’s Gym</h4>
+                <h4 style="margin-bottom:4px;">Jeffrey's Gym</h4>
                 <p>Gym • Zumba • Karate</p>
               </div>
             </div>
             <p>
-              Your fitness journey starts here. Jeffrey’s Gym in Los Baños offers
+              Your fitness journey starts here. Jeffrey's Gym in Los Baños offers
               gym training, Zumba fitness, Karate classes, flexible membership plans,
               and a welcoming space for beginners and active members.
             </p>
@@ -1081,13 +1268,12 @@
         </div>
 
         <div class="footer-bottom">
-          © 2026 Jeffrey’s Gym Los Baños. All rights reserved.
+          © 2026 Jeffrey's Gym Los Baños. All rights reserved.
         </div>
       </footer>
     </div>
   </div>
 
-  <!-- Modal -->
   <div class="modal" id="applyModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -1100,27 +1286,35 @@
       <div class="modal-card">
         <p>
           <i class="fas fa-map-pin" style="color:#9dccff;"></i>
-          <strong> Jeffrey’s Gym Los Baños</strong><br>
+          <strong> Jeffrey's Gym Los Baños</strong><br>
           Lopez Avenue, Batong Malake, Los Baños, Laguna
         </p>
       </div>
 
-      <form class="modal-form" id="applyForm">
-        <input type="text" placeholder="Full Name" required>
-        <input type="email" placeholder="Email Address" required>
-        <input type="tel" placeholder="Phone Number" required>
+      <form class="modal-form" id="applyForm" method="POST" action="submit_application.php">
+        <input type="text" name="fullname" placeholder="Full Name" required>
+        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="tel" name="phone" placeholder="Phone Number" required>
 
-        <select required>
-          <option value="" disabled selected>Select your interest</option>
-          <option>Gym Training</option>
-          <option>Zumba Classes</option>
-          <option>Karate Training</option>
-          <option>Gym + Zumba</option>
-          <option>Gym + Karate</option>
-          <option>All Access</option>
+        <select name="interest" id="interestSelect" required>
+          <option value="" disabled selected>Select your membership type</option>
+          <?php foreach ($prices as $interest_name => $price): ?>
+          <option value="<?php echo htmlspecialchars($interest_name); ?>" data-price="<?php echo $price; ?>">
+            <?php echo htmlspecialchars($interest_name); ?> - ₱<?php echo number_format($price, 2); ?>
+            <?php if($interest_name == 'Student/Senior Rate'): ?> (Valid ID required)<?php endif; ?>
+            <?php if($interest_name == 'Weekly Pass'): ?> (7 days)<?php endif; ?>
+            <?php if($interest_name == 'Single Session'): ?> (per visit)<?php endif; ?>
+          </option>
+          <?php endforeach; ?>
         </select>
 
-        <textarea rows="4" placeholder="Questions or preferred schedule (optional)"></textarea>
+        <div class="price-display" id="priceDisplay">
+          <span class="label">Price:</span>
+          <span class="value" id="priceValue">₱0</span>
+        </div>
+
+        <input type="hidden" name="price" id="priceHidden">
+        <textarea name="message" rows="4" placeholder="Questions or preferred schedule (optional)"></textarea>
 
         <button type="submit" class="btn-secondary" style="width:100%;">
           <i class="fas fa-paper-plane"></i>
@@ -1131,11 +1325,13 @@
   </div>
 
   <script>
+    const prices = <?php echo json_encode($prices); ?>;
+    
     const slides = [
       {
         theme: "blue",
         thumb: "Gym Training",
-        eyebrow: "Jeffrey’s Gym • Main Program",
+        eyebrow: "Jeffrey's Gym • Main Program",
         title: "Train stronger with our complete Gym Training setup",
         text: "Complete gym access with premium equipment for strength training, cardio, and functional fitness in a cleaner, more modern presentation.",
         bullets: [
@@ -1160,7 +1356,7 @@
       {
         theme: "yellow",
         thumb: "Zumba Fitness",
-        eyebrow: "Jeffrey’s Gym • Group Fitness",
+        eyebrow: "Jeffrey's Gym • Group Fitness",
         title: "Dance your way to fitness with energetic Zumba classes",
         text: "High-energy Zumba sessions designed to keep workouts fun, social, and effective for all levels.",
         bullets: [
@@ -1185,7 +1381,7 @@
       {
         theme: "green",
         thumb: "Karate-Do",
-        eyebrow: "Jeffrey’s Gym • Martial Arts",
+        eyebrow: "Jeffrey's Gym • Martial Arts",
         title: "Build discipline, confidence, and self-defense skills",
         text: "Traditional Shotokan Karate training guided by experienced instructors for beginners and advancing students.",
         bullets: [
@@ -1210,13 +1406,14 @@
       {
         theme: "red",
         thumb: "Membership Plans",
-        eyebrow: "Jeffrey’s Gym • Pricing",
+        eyebrow: "Jeffrey's Gym • Pricing",
         title: "Choose a membership plan that fits your goals",
         text: "Flexible plans for gym access, Zumba classes, Karate training, or full all-access membership.",
         bullets: [
-          "Gym Only - ₱1,200/month",
-          "Zumba + Gym - ₱1,800/month | Karate + Gym - ₱1,800/month",
-          "All Access - ₱2,500/month with broader inclusions"
+          `Regular Membership - ₱${prices['Regular Membership'] || 700}/month`,
+          `Student/Senior Rate - ₱${prices['Student/Senior Rate'] || 550}/month`,
+          `Weekly Pass - ₱${prices['Weekly Pass'] || 350}/week`,
+          `Single Session - ₱${prices['Single Session'] || 100}/session`
         ],
         link: "Check pricing options",
         primaryBtn: "Compare Plans",
@@ -1224,18 +1421,18 @@
         image: "https://images.pexels.com/photos/4164762/pexels-photo-4164762.jpeg?auto=compress&cs=tinysrgb&w=1600",
         badges: ["Flexible Plans", "Affordable", "All Access"],
         overlayTitle: "Membership Plans",
-        overlayText: "Choose from Gym Only, Zumba + Gym, Karate + Gym, or All Access based on your fitness goals.",
+        overlayText: "Choose from Regular Membership, Student/Senior Rate, Weekly Pass, or Single Session based on your needs.",
         statsTitle: "Popular Options",
         stats: [
-          "Gym Only - ₱1,200/month",
-          "Zumba + Gym - ₱1,800/month",
-          "All Access - ₱2,500/month"
+          `Regular Membership - ₱${prices['Regular Membership'] || 700}/month`,
+          `Student/Senior Rate - ₱${prices['Student/Senior Rate'] || 550}/month`,
+          `Weekly Pass - ₱${prices['Weekly Pass'] || 350}/week`
         ]
       },
       {
         theme: "purple",
         thumb: "Weekly Schedule",
-        eyebrow: "Jeffrey’s Gym • Schedule",
+        eyebrow: "Jeffrey's Gym • Schedule",
         title: "See gym hours, classes, and weekly training times easily",
         text: "Get quick access to your weekly gym hours, Zumba sessions, and Karate class schedule in one section.",
         bullets: [
@@ -1260,7 +1457,7 @@
       {
         theme: "gray",
         thumb: "Location & Contact",
-        eyebrow: "Jeffrey’s Gym • Visit Us",
+        eyebrow: "Jeffrey's Gym • Visit Us",
         title: "Visit our gym and contact us for classes or inquiries",
         text: "Find our location, operating hours, and contact details quickly if you want to visit or sign up.",
         bullets: [
@@ -1274,7 +1471,7 @@
         image: "https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600",
         badges: ["Visit", "Contact", "Directions"],
         overlayTitle: "Location & Contact",
-        overlayText: "Visit Jeffrey’s Gym in Los Baños and reach out for memberships, free trials, schedules, or questions.",
+        overlayText: "Visit Jeffrey's Gym in Los Baños and reach out for memberships, free trials, schedules, or questions.",
         statsTitle: "Quick Info",
         stats: [
           "Lopez Avenue, Batong Malake",
@@ -1444,25 +1641,46 @@
 
     window.addEventListener("resize", centerActiveThumb);
 
+    const interestSelect = document.getElementById('interestSelect');
+    const priceValueSpan = document.getElementById('priceValue');
+    const priceHidden = document.getElementById('priceHidden');
+
+    function updatePrice() {
+      const selectedInterest = interestSelect.value;
+      if (selectedInterest && prices[selectedInterest]) {
+        const price = prices[selectedInterest];
+        priceValueSpan.textContent = `₱${price.toLocaleString()}`;
+        priceHidden.value = price;
+      } else {
+        priceValueSpan.textContent = '₱0';
+        priceHidden.value = '';
+      }
+    }
+
+    if (interestSelect) {
+      interestSelect.addEventListener('change', updatePrice);
+    }
+
     function openModal() {
-      document.getElementById("applyModal").classList.add("show");
-      document.body.style.overflow = "hidden";
+      const modal = document.getElementById("applyModal");
+      if (modal) {
+        modal.classList.add("show");
+        document.body.style.overflow = "hidden";
+        updatePrice();
+      }
     }
 
     function closeModal() {
-      document.getElementById("applyModal").classList.remove("show");
-      document.body.style.overflow = "auto";
+      const modal = document.getElementById("applyModal");
+      if (modal) {
+        modal.classList.remove("show");
+        document.body.style.overflow = "auto";
+      }
     }
 
     window.addEventListener("click", (e) => {
       const modal = document.getElementById("applyModal");
-      if (e.target === modal) closeModal();
-    });
-
-    document.getElementById("applyForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      alert("Thank you! We will contact you within 24 hours.");
-      closeModal();
+      if (modal && e.target === modal) closeModal();
     });
 
     renderCopy(currentIndex, false);
@@ -1473,8 +1691,8 @@
     startAutoSlide();
 
     setTimeout(() => {
-      splashScreen.classList.add("hide");
-      siteContent.classList.add("show");
+      if (splashScreen) splashScreen.classList.add("hide");
+      if (siteContent) siteContent.classList.add("show");
     }, 5000);
   </script>
 </body>
