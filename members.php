@@ -6,7 +6,7 @@ $search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : '';
 $status_filter = isset($_GET['status']) ? sanitizeInput($_GET['status']) : '';
 $interest_filter = isset($_GET['interest']) ? sanitizeInput($_GET['interest']) : '';
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$rows_per_page = 10;
+$rows_per_page = 7;
 $offset = ($page - 1) * $rows_per_page;
 
 // Build WHERE clause
@@ -430,7 +430,7 @@ $interests_result = $conn->query($interests_sql);
 
     .filter-bar {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 12px;
       margin-bottom: 20px;
     }
@@ -444,6 +444,7 @@ $interests_result = $conn->query($interests_sql);
       color: #fff;
       outline: none;
       font-size: 14px;
+      transition: all 0.2s ease;
     }
 
     .filter-bar input::placeholder {
@@ -494,6 +495,7 @@ $interests_result = $conn->query($interests_sql);
 
     tbody tr {
       transition: background .2s ease;
+      cursor: pointer;
     }
 
     tbody tr:hover {
@@ -530,16 +532,13 @@ $interests_result = $conn->query($interests_sql);
       border: 1px solid rgba(255,107,107,0.18);
     }
 
-    .badge.active {
-      background: rgba(71,201,126,0.14);
-      color: #9ef0bd;
-      border: 1px solid rgba(71,201,126,0.18);
+    .badge.membership {
+      background: rgba(138,180,248,0.14);
+      color: #bdd7ff;
+      border: 1px solid rgba(138,180,248,0.18);
     }
 
-    .clickable-row {
-      cursor: pointer;
-    }
-
+    /* Pagination */
     .pagination {
       display: flex;
       justify-content: space-between;
@@ -574,6 +573,7 @@ $interests_result = $conn->query($interests_sql);
       display: flex;
       align-items: center;
       justify-content: center;
+      text-decoration: none;
     }
 
     .page-number.active,
@@ -629,310 +629,6 @@ $interests_result = $conn->query($interests_sql);
       box-shadow: 0 15px 35px rgba(11,87,208,0.5);
     }
 
-    @media (max-width: 1100px) {
-      .filter-bar {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 920px) {
-      body {
-        flex-direction: column;
-        overflow: auto;
-      }
-
-      .sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--line);
-        height: auto;
-      }
-
-      .main {
-        overflow: visible;
-        height: auto;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .main {
-        padding: 16px;
-      }
-
-      .filter-bar {
-        grid-template-columns: 1fr;
-      }
-
-      .summary-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <aside class="sidebar">
-    <div class="sidebar-top">
-      <div class="brand">
-        <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" class="brand-logo" onerror="this.src='https://via.placeholder.com/60x60/0b57d0/ffffff?text=JG'">
-        <div>
-          <h2>Jeffrey's Gym</h2>
-          <small>Admin Dashboard</small>
-        </div>
-      </div>
-
-      <a href="admin_dashboard.php">
-        <span>🏠</span> Dashboard
-      </a>
-      <a href="#" class="active">
-        <span>👥</span> Members
-      </a>
-      <a href="payments.php">
-        <span>💰</span> Payments
-      </a>
-      <a href="prices.php">
-        <span>💲</span> Manage Prices
-      </a>
-      <a href="applications.php">
-        <span>📝</span> Applications
-      </a>
-    </div>
-
-    <div class="sidebar-bottom">
-      <a href="logout.php">
-        <span>🚪</span> Sign Out
-      </a>
-    </div>
-  </aside>
-
-  <main class="main" id="mainContent">
-    <div class="topbar">
-      <div>
-        <h1>Member Information</h1>
-        <p>Manage member records, filter by status and membership type.</p>
-      </div>
-      <div class="top-actions">
-        <a href="members.php" class="btn btn-secondary">↺ Reset Filters</a>
-        <button class="btn btn-primary" onclick="openAddMemberModal()">+ Add Member</button>
-      </div>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="summary-grid">
-      <div class="summary-card healthy">
-        <h3>✅ Healthy Accounts</h3>
-        <div class="value"><?php echo $healthy_members; ?></div>
-        <div class="sub">Members with more than 7 days until expiry</div>
-      </div>
-
-      <div class="summary-card warning">
-        <h3>⚠️ Expiring Soon</h3>
-        <div class="value"><?php echo $expiring_members; ?></div>
-        <div class="sub">Members expiring within 7 days</div>
-      </div>
-
-      <div class="summary-card danger">
-        <h3>❌ Expired Accounts</h3>
-        <div class="value"><?php echo $expired_members; ?></div>
-        <div class="sub">Members with expired memberships</div>
-      </div>
-
-      <div class="summary-card">
-        <h3>📊 Total Members</h3>
-        <div class="value"><?php echo $total_members; ?></div>
-        <div class="sub">All registered members</div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <h2>Members Table</h2>
-          <p class="panel-sub">Click any row to view complete member details.</p>
-        </div>
-      </div>
-
-      <!-- Filter Bar -->
-      <form method="GET" action="" class="filter-bar">
-        <input type="text" name="search" placeholder="🔍 Search by name, email, or member code..." value="<?php echo htmlspecialchars($search); ?>">
-        <select name="status">
-          <option value="">📋 All Health Status</option>
-          <option value="Healthy" <?php echo $status_filter == 'Healthy' ? 'selected' : ''; ?>>✅ Healthy</option>
-          <option value="Expiring Soon" <?php echo $status_filter == 'Expiring Soon' ? 'selected' : ''; ?>>⚠️ Expiring Soon</option>
-          <option value="Expired" <?php echo $status_filter == 'Expired' ? 'selected' : ''; ?>>❌ Expired</option>
-        </select>
-        <select name="interest">
-          <option value="">🏋️ All Interests</option>
-          <?php while($interest = $interests_result->fetch_assoc()): ?>
-          <option value="<?php echo htmlspecialchars($interest['interest_name']); ?>" <?php echo $interest_filter == $interest['interest_name'] ? 'selected' : ''; ?>>
-            <?php echo htmlspecialchars($interest['interest_name']); ?>
-          </option>
-          <?php endwhile; ?>
-        </select>
-        <button type="submit" class="btn btn-primary">Apply Filters</button>
-      </form>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Member Code</th>
-              <th>Full Name</th>
-              <th>Email</th>
-              <th>Membership Type</th>
-              <th>Health Status</th>
-              <th>Start Date</th>
-              <th>Expiry Date</th>
-              <th>Days Left</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if ($members && $members->num_rows > 0): ?>
-              <?php while($member = $members->fetch_assoc()): 
-                $status_class = '';
-                $status_text = '';
-                $health_class = '';
-                
-                if ($member['health_status'] == 'Healthy') {
-                    $health_class = 'healthy';
-                } elseif ($member['health_status'] == 'Expiring Soon') {
-                    $health_class = 'expiring';
-                } else {
-                    $health_class = 'expired';
-                }
-                
-                $days_left = $member['days_remaining'];
-                $days_display = $days_left < 0 ? 'Expired' : $days_left . ' days';
-              ?>
-              <tr class="clickable-row" data-id="<?php echo $member['id']; ?>">
-                <td><strong><?php echo htmlspecialchars($member['member_code']); ?></strong></td>
-                <td><?php echo htmlspecialchars($member['fullname']); ?></td>
-                <td><?php echo htmlspecialchars($member['email']); ?></td>
-                <td><span class="badge"><?php echo htmlspecialchars($member['membership_type']); ?></span></td>
-                <td><span class="badge <?php echo $health_class; ?>"><?php echo $member['health_status']; ?></span></td>
-                <td><?php echo date('Y-m-d', strtotime($member['start_date'])); ?></td>
-                <td><?php echo date('Y-m-d', strtotime($member['end_date'])); ?></td>
-                <td><?php echo $days_display; ?></td>
-              </tr>
-              <?php endwhile; ?>
-            <?php else: ?>
-              <tr>
-                <td colspan="8" style="text-align: center; padding: 40px;">
-                  <div class="empty-state">
-                    <i class="fas fa-users"></i>
-                    <h3>No members found</h3>
-                    <p>Try adjusting your search or filter criteria.</p>
-                  </div>
-                </td>
-              </tr>
-            <?php endif; ?>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <?php if ($total_pages > 1): ?>
-      <div class="pagination">
-        <div class="pagination-info">
-          Showing page <?php echo $page; ?> of <?php echo $total_pages; ?> (<?php echo $total_rows; ?> total members)
-        </div>
-        <div class="pagination-controls">
-          <?php if ($page > 1): ?>
-            <a href="?page=<?php echo $page-1; ?>&search=<?php echo urlencode($search); ?>&status=<?php echo urlencode($status_filter); ?>&interest=<?php echo urlencode($interest_filter); ?>" class="btn btn-secondary">← Previous</a>
-          <?php endif; ?>
-          
-          <?php for($i = 1; $i <= $total_pages; $i++): ?>
-            <?php if ($i == $page): ?>
-              <button class="page-number active"><?php echo $i; ?></button>
-            <?php else: ?>
-              <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&status=<?php echo urlencode($status_filter); ?>&interest=<?php echo urlencode($interest_filter); ?>" class="page-number"><?php echo $i; ?></a>
-            <?php endif; ?>
-          <?php endfor; ?>
-          
-          <?php if ($page < $total_pages): ?>
-            <a href="?page=<?php echo $page+1; ?>&search=<?php echo urlencode($search); ?>&status=<?php echo urlencode($status_filter); ?>&interest=<?php echo urlencode($interest_filter); ?>" class="btn btn-secondary">Next →</a>
-          <?php endif; ?>
-        </div>
-      </div>
-      <?php endif; ?>
-    </div>
-  </main>
-
-  <!-- Scroll to Top Button -->
-  <button class="scroll-top" id="scrollTopBtn" onclick="scrollToTop()">↑</button>
-
-  <!-- Member Details Modal -->
-  <div class="modal" id="memberModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Member Details</h3>
-        <button class="close-btn" onclick="closeModal('memberModal')">✕</button>
-      </div>
-      <div class="modal-grid" id="memberModalBody">
-        <div class="modal-card">
-          <strong>Loading...</strong>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeModal('memberModal')">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Member Modal -->
-  <div class="modal" id="addMemberModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Add New Member</h3>
-        <button class="close-btn" onclick="closeModal('addMemberModal')">✕</button>
-      </div>
-      <form method="POST" action="add_member.php">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" name="fullname" placeholder="Enter member's full name" required>
-          </div>
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" name="email" placeholder="member@email.com" required>
-          </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input type="tel" name="phone" placeholder="09xx xxx xxxx" required>
-          </div>
-          <div class="form-group">
-            <label>Membership Type</label>
-            <select name="membership_type" required>
-              <option value="">Select a plan</option>
-              <?php
-              $plans_sql = "SELECT interest_name, price FROM prices ORDER BY price";
-              $plans = $conn->query($plans_sql);
-              while($plan = $plans->fetch_assoc()):
-              ?>
-              <option value="<?php echo htmlspecialchars($plan['interest_name']); ?>">
-                <?php echo htmlspecialchars($plan['interest_name']); ?> (₱<?php echo number_format($plan['price'], 2); ?>)
-              </option>
-              <?php endwhile; ?>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Start Date</label>
-            <input type="date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
-          </div>
-          <div class="form-group">
-            <label>Notes (Optional)</label>
-            <textarea name="notes" rows="3" placeholder="Additional notes about the member"></textarea>
-          </div>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Member</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <style>
     /* Modal styles */
     .modal {
       display: none;
@@ -1053,9 +749,386 @@ $interests_result = $conn->query($interests_sql);
       flex-wrap: wrap;
       margin-top: 22px;
     }
+
+    @media (max-width: 1100px) {
+      .filter-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 920px) {
+      body {
+        flex-direction: column;
+        overflow: auto;
+      }
+
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        height: auto;
+      }
+
+      .main {
+        overflow: visible;
+        height: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .main {
+        padding: 16px;
+      }
+
+      .filter-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" class="brand-logo" onerror="this.src='https://via.placeholder.com/60x60/0b57d0/ffffff?text=JG'">
+        <div>
+          <h2>Jeffrey's Gym</h2>
+          <small>Admin Dashboard</small>
+        </div>
+      </div>
+
+      <a href="admin_dashboard.php">
+        <span>🏠</span> Dashboard
+      </a>
+      <a href="#" class="active">
+        <span>👥</span> Members
+      </a>
+      <a href="payments.php">
+        <span>💰</span> Payments
+      </a>
+      <a href="prices.php">
+        <span>💲</span> Manage Prices
+      </a>
+      <a href="applications.php">
+        <span>📝</span> Applications
+      </a>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a href="logout.php">
+        <span>🚪</span> Sign Out
+      </a>
+    </div>
+  </aside>
+
+  <main class="main" id="mainContent">
+    <div class="topbar">
+      <div>
+        <h1>Member Information</h1>
+        <p>Manage member records, filter by status and membership type. Showing <?php echo $rows_per_page; ?> members per page.</p>
+      </div>
+      <div class="top-actions">
+        <a href="members.php" class="btn btn-secondary">↺ Reset Filters</a>
+        <button class="btn btn-primary" onclick="openAddMemberModal()">+ Add Member</button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card healthy">
+        <h3>✅ Healthy Accounts</h3>
+        <div class="value"><?php echo $healthy_members; ?></div>
+        <div class="sub">Members with more than 7 days until expiry</div>
+      </div>
+
+      <div class="summary-card warning">
+        <h3>⚠️ Expiring Soon</h3>
+        <div class="value"><?php echo $expiring_members; ?></div>
+        <div class="sub">Members expiring within 7 days</div>
+      </div>
+
+      <div class="summary-card danger">
+        <h3>❌ Expired Accounts</h3>
+        <div class="value"><?php echo $expired_members; ?></div>
+        <div class="sub">Members with expired memberships</div>
+      </div>
+
+      <div class="summary-card">
+        <h3>📊 Total Members</h3>
+        <div class="value"><?php echo $total_members; ?></div>
+        <div class="sub">All registered members</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Members Table</h2>
+          <p class="panel-sub">Click any row to view complete member details.</p>
+        </div>
+      </div>
+
+      <!-- Filter Bar - No Apply Button, auto-filter on change -->
+      <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Search by name, email, or member code..." value="<?php echo htmlspecialchars($search); ?>">
+        <select id="statusSelect">
+          <option value="">📋 All Health Status</option>
+          <option value="Healthy" <?php echo $status_filter == 'Healthy' ? 'selected' : ''; ?>>✅ Healthy</option>
+          <option value="Expiring Soon" <?php echo $status_filter == 'Expiring Soon' ? 'selected' : ''; ?>>⚠️ Expiring Soon</option>
+          <option value="Expired" <?php echo $status_filter == 'Expired' ? 'selected' : ''; ?>>❌ Expired</option>
+        </select>
+        <select id="interestSelect">
+          <option value="">🏋️ All Interests</option>
+          <?php 
+          $interests_result = $conn->query($interests_sql);
+          while($interest = $interests_result->fetch_assoc()): 
+          ?>
+          <option value="<?php echo htmlspecialchars($interest['interest_name']); ?>" <?php echo $interest_filter == $interest['interest_name'] ? 'selected' : ''; ?>>
+            <?php echo htmlspecialchars($interest['interest_name']); ?>
+          </option>
+          <?php endwhile; ?>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table id="membersTable">
+          <thead>
+            <tr>
+              <th>Member Code</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Membership Type</th>
+              <th>Health Status</th>
+              <th>Start Date</th>
+              <th>Expiry Date</th>
+              <th>Days Left</th>
+            </tr>
+          </thead>
+          <tbody id="membersTableBody">
+            <?php if ($members && $members->num_rows > 0): ?>
+              <?php while($member = $members->fetch_assoc()): 
+                $health_class = '';
+                if ($member['health_status'] == 'Healthy') {
+                    $health_class = 'healthy';
+                } elseif ($member['health_status'] == 'Expiring Soon') {
+                    $health_class = 'expiring';
+                } else {
+                    $health_class = 'expired';
+                }
+                
+                $days_left = $member['days_remaining'];
+                $days_display = $days_left < 0 ? 'Expired' : $days_left . ' days';
+              ?>
+              <tr class="clickable-row" data-id="<?php echo $member['id']; ?>">
+                <td><strong><?php echo htmlspecialchars($member['member_code']); ?></strong></td>
+                <td><?php echo htmlspecialchars($member['fullname']); ?></td>
+                <td><?php echo htmlspecialchars($member['email']); ?></td>
+                <td><span class="badge membership"><?php echo htmlspecialchars($member['membership_type']); ?></span></td>
+                <td><span class="badge <?php echo $health_class; ?>"><?php echo $member['health_status']; ?></span></td>
+                <td><?php echo date('Y-m-d', strtotime($member['start_date'])); ?></td>
+                <td><?php echo date('Y-m-d', strtotime($member['end_date'])); ?></td>
+                <td><?php echo $days_display; ?></td>
+              </tr>
+              <?php endwhile; ?>
+            <?php else: ?>
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 40px;">
+                  <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No members found</h3>
+                    <p>Try adjusting your search or filter criteria.</p>
+                  </div>
+                </td>
+              </tr>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="paginationContainer">
+        <!-- Pagination will be loaded via AJAX -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Scroll to Top Button -->
+  <button class="scroll-top" id="scrollTopBtn" onclick="scrollToTop()">↑</button>
+
+  <!-- Member Details Modal -->
+  <div class="modal" id="memberModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Member Details</h3>
+        <button class="close-btn" onclick="closeModal('memberModal')">✕</button>
+      </div>
+      <div class="modal-grid" id="memberModalBody">
+        <div class="modal-card">
+          <strong>Loading...</strong>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('memberModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Member Modal -->
+  <div class="modal" id="addMemberModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Member</h3>
+        <button class="close-btn" onclick="closeModal('addMemberModal')">✕</button>
+      </div>
+      <form method="POST" action="add_member.php">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="fullname" placeholder="Enter member's full name" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" name="email" placeholder="member@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" name="phone" placeholder="09xx xxx xxxx" required>
+          </div>
+          <div class="form-group">
+            <label>Membership Type</label>
+            <select name="membership_type" required>
+              <option value="">Select a plan</option>
+              <?php
+              $plans_sql = "SELECT interest_name, price FROM prices ORDER BY price";
+              $plans = $conn->query($plans_sql);
+              while($plan = $plans->fetch_assoc()):
+              ?>
+              <option value="<?php echo htmlspecialchars($plan['interest_name']); ?>">
+                <?php echo htmlspecialchars($plan['interest_name']); ?> (₱<?php echo number_format($plan['price'], 2); ?>)
+              </option>
+              <?php endwhile; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+          </div>
+          <div class="form-group">
+            <label>Notes (Optional)</label>
+            <textarea name="notes" rows="3" placeholder="Additional notes about the member"></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
+    // Debounce function to prevent too many requests
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Function to apply filters via AJAX
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusSelect').value;
+      const interest = document.getElementById('interestSelect').value;
+      const page = 1; // Reset to page 1 when filtering
+      
+      // Build URL with parameters
+      const url = `members_ajax.php?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&interest=${encodeURIComponent(interest)}&page=${page}`;
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Update table body
+            const tbody = document.getElementById('membersTableBody');
+            tbody.innerHTML = data.html;
+            
+            // Update pagination
+            const paginationContainer = document.getElementById('paginationContainer');
+            paginationContainer.innerHTML = data.pagination;
+            
+            // Re-attach click handlers to new rows
+            attachRowClickHandlers();
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Function to load page
+    function loadPage(page) {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusSelect').value;
+      const interest = document.getElementById('interestSelect').value;
+      
+      const url = `members_ajax.php?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&interest=${encodeURIComponent(interest)}&page=${page}`;
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('membersTableBody').innerHTML = data.html;
+            document.getElementById('paginationContainer').innerHTML = data.pagination;
+            attachRowClickHandlers();
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Attach click handlers to member rows
+    function attachRowClickHandlers() {
+      document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', async () => {
+          const id = row.dataset.id;
+          if (id) {
+            const data = await getMemberDetails(id);
+            if (data && data.success) {
+              const modalBody = document.getElementById('memberModalBody');
+              modalBody.innerHTML = data.items.map(item => `
+                <div class="modal-card">
+                  <strong>${item.label}</strong>
+                  <span>${item.value}</span>
+                </div>
+              `).join('');
+              openModal('memberModal');
+            }
+          }
+        });
+      });
+    }
+
+    // Get member details via AJAX
+    async function getMemberDetails(id) {
+      try {
+        const response = await fetch(`api/get_data.php?type=member&id=${id}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching member details:', error);
+        return { success: false, error: 'Failed to load member details' };
+      }
+    }
+
+    // Modal functions
     function openModal(id) {
       document.getElementById(id).classList.add('show');
     }
@@ -1068,36 +1141,25 @@ $interests_result = $conn->query($interests_sql);
       openModal('addMemberModal');
     }
 
-    window.addEventListener('click', (e) => {
-      document.querySelectorAll('.modal').forEach(modal => {
-        if (e.target === modal) modal.classList.remove('show');
-      });
-    });
+    // Auto-filter on input/change events
+    const searchInput = document.getElementById('searchInput');
+    const statusSelect = document.getElementById('statusSelect');
+    const interestSelect = document.getElementById('interestSelect');
+    
+    searchInput.addEventListener('input', debounce(applyFilters, 500));
+    statusSelect.addEventListener('change', applyFilters);
+    interestSelect.addEventListener('change', applyFilters);
 
-    // Get member details via AJAX
-    async function getMemberDetails(id) {
-      const response = await fetch(`api/get_data.php?type=member&id=${id}`);
-      return await response.json();
-    }
-
-    // Handle click on member rows
-    document.querySelectorAll('.clickable-row').forEach(row => {
-      row.addEventListener('click', async () => {
-        const id = row.dataset.id;
-        if (id) {
-          const data = await getMemberDetails(id);
-          if (data && data.success) {
-            const modalBody = document.getElementById('memberModalBody');
-            modalBody.innerHTML = data.items.map(item => `
-              <div class="modal-card">
-                <strong>${item.label}</strong>
-                <span>${item.value}</span>
-              </div>
-            `).join('');
-            openModal('memberModal');
-          }
+    // Pagination click handler (event delegation)
+    document.getElementById('paginationContainer').addEventListener('click', (e) => {
+      const pageLink = e.target.closest('.page-link');
+      if (pageLink) {
+        e.preventDefault();
+        const page = pageLink.dataset.page;
+        if (page) {
+          loadPage(parseInt(page));
         }
-      });
+      }
     });
 
     // Scroll to top functionality
@@ -1120,6 +1182,15 @@ $interests_result = $conn->query($interests_sql);
         }
       });
     }
+
+    window.addEventListener('click', (e) => {
+      document.querySelectorAll('.modal').forEach(modal => {
+        if (e.target === modal) modal.classList.remove('show');
+      });
+    });
+
+    // Initial attachment of click handlers
+    attachRowClickHandlers();
   </script>
 </body>
 </html>

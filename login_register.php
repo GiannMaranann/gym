@@ -1,3 +1,136 @@
+<?php
+require_once 'config.php';
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$message = '';
+$message_type = '';
+
+// Handle Registration
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
+    $fullname = sanitizeInput($_POST['fullname']);
+    $email = sanitizeInput($_POST['email']);
+    $password = $_POST['password'];
+    $role = sanitizeInput($_POST['role']);
+    
+    // Validation
+    $errors = [];
+    
+    if (empty($fullname)) {
+        $errors[] = "Full name is required";
+    }
+    
+    if (empty($email) || !validateEmail($email)) {
+        $errors[] = "Valid email address is required";
+    }
+    
+    if (empty($password) || strlen($password) < 6) {
+        $errors[] = "Password must be at least 6 characters";
+    }
+    
+    if (empty($role)) {
+        $errors[] = "Please select a role";
+    }
+    
+    // Check if email already exists
+    $check_sql = "SELECT id FROM admin_users WHERE email = ?";
+    $check_stmt = executeQuery($check_sql, [$email], "s");
+    if ($check_stmt->get_result()->num_rows > 0) {
+        $errors[] = "Email already registered";
+    }
+    
+    if (empty($errors)) {
+        // Hash password
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        
+        // Insert new admin user
+        $insert_sql = "INSERT INTO admin_users (username, password, email, fullname, role, created_at, is_active) 
+                       VALUES (?, ?, ?, ?, ?, NOW(), 1)";
+        $username = strtolower(explode('@', $email)[0]);
+        $stmt = executeQuery($insert_sql, [$username, $hashed_password, $email, $fullname, $role], "sssss");
+        
+        if ($stmt && $stmt->affected_rows > 0) {
+            $message = "Registration successful! You can now login.";
+            $message_type = "success";
+            
+            // Log the action
+            $new_id = $conn->insert_id;
+            logAdminAction($new_id, 'REGISTER', 'admin_users', $new_id, null, json_encode(['role' => $role]));
+        } else {
+            $message = "Registration failed. Please try again.";
+            $message_type = "error";
+        }
+    } else {
+        $message = implode("<br>", $errors);
+        $message_type = "error";
+    }
+}
+
+// Handle Login
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+    $email = sanitizeInput($_POST['email']);
+    $password = $_POST['password'];
+    
+    $errors = [];
+    
+    if (empty($email)) {
+        $errors[] = "Email is required";
+    }
+    
+    if (empty($password)) {
+        $errors[] = "Password is required";
+    }
+    
+    if (empty($errors)) {
+        $sql = "SELECT * FROM admin_users WHERE email = ? AND is_active = 1";
+        $stmt = executeQuery($sql, [$email], "s");
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+            
+            if (password_verify($password, $user['password'])) {
+                // Set session variables
+                $_SESSION['admin_id'] = $user['id'];
+                $_SESSION['admin_username'] = $user['username'];
+                $_SESSION['admin_email'] = $user['email'];
+                $_SESSION['admin_fullname'] = $user['fullname'];
+                $_SESSION['admin_role'] = $user['role'];
+                $_SESSION['admin_logged_in'] = true;
+                
+                // Update last login
+                $update_sql = "UPDATE admin_users SET last_login = NOW() WHERE id = ?";
+                executeQuery($update_sql, [$user['id']], "i");
+                
+                // Log the action
+                logAdminAction($user['id'], 'LOGIN', 'admin_users', $user['id'], null, json_encode(['ip' => $_SERVER['REMOTE_ADDR']]));
+                
+                // Redirect based on role
+                header('Location: admin_dashboard.php');
+                exit();
+            } else {
+                $message = "Invalid email or password";
+                $message_type = "error";
+            }
+        } else {
+            $message = "Invalid email or password";
+            $message_type = "error";
+        }
+    } else {
+        $message = implode("<br>", $errors);
+        $message_type = "error";
+    }
+}
+
+// Check if already logged in
+if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
+    header('Location: admin_dashboard.php');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +141,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
     :root {
@@ -25,6 +159,8 @@
       --primary-soft: rgba(138, 180, 248, 0.12);
       --success-bg: rgba(28, 108, 63, 0.22);
       --success-text: #d1ffe0;
+      --error-bg: rgba(220, 53, 69, 0.22);
+      --error-text: #ffb1b1;
       --shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
       --radius-xl: 30px;
       --radius-lg: 22px;
@@ -68,7 +204,7 @@
 
     .auth-wrap {
       width: 100%;
-      max-width: 520px;
+      max-width: 550px;
       position: relative;
       z-index: 1;
     }
@@ -199,6 +335,11 @@
       font-weight: 600;
     }
 
+    .input-group label i {
+      margin-right: 8px;
+      width: 20px;
+    }
+
     .input-group input,
     .input-group select {
       width: 100%;
@@ -218,6 +359,7 @@
 
     .input-group select option {
       color: #111;
+      background: var(--card-2);
     }
 
     .input-group input:focus,
@@ -255,6 +397,7 @@
       text-align: center;
       font-weight: 700;
       line-height: 1.6;
+      font-size: 14px;
     }
 
     .message.success {
@@ -263,11 +406,45 @@
       border: 1px solid rgba(74, 170, 111, 0.18);
     }
 
+    .message.error {
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid rgba(220, 53, 69, 0.18);
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .role-admin {
+      background: rgba(11,87,208,0.2);
+      color: #8ab4f8;
+    }
+
+    .role-frontdesk {
+      background: rgba(71,201,126,0.2);
+      color: #9ef0bd;
+    }
+
+    .role-coach {
+      background: rgba(255,182,72,0.2);
+      color: #ffd08b;
+    }
+
     .note {
       text-align: center;
       margin-top: 16px;
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       line-height: 1.7;
     }
 
@@ -309,12 +486,12 @@
     <div class="auth-card">
       <div class="brand">
         <img src="gym_logo.jpg" alt="Jeffrey's Gym Logo" class="brand-logo" onerror="this.src='https://via.placeholder.com/60x60/0b57d0/ffffff?text=JG'">
-        <div class="brand-name">Jeffrey’s Gym</div>
+        <div class="brand-name">Jeffrey's Gym</div>
       </div>
 
       <div class="form-header">
         <h1>Account Access</h1>
-        <p>Login or register to continue.</p>
+        <p>Login or register to access the admin dashboard.</p>
       </div>
 
       <div class="tabs">
@@ -322,51 +499,69 @@
         <button class="tab-btn" type="button" onclick="showForm('register')">Register</button>
       </div>
 
-      <form id="loginForm" class="active">
+      <!-- Login Form -->
+      <form id="loginForm" method="POST" action="" class="active">
         <div class="input-group">
-          <label for="loginEmail">📧 Email</label>
-          <input id="loginEmail" type="email" placeholder="Enter your email" required />
+          <label for="loginEmail"><i class="fas fa-envelope"></i> Email</label>
+          <input id="loginEmail" name="email" type="email" placeholder="Enter your email" required />
         </div>
 
         <div class="input-group">
-          <label for="loginPassword">🔒 Password</label>
-          <input id="loginPassword" type="password" placeholder="Enter your password" required />
+          <label for="loginPassword"><i class="fas fa-lock"></i> Password</label>
+          <input id="loginPassword" name="password" type="password" placeholder="Enter your password" required />
         </div>
 
+        <input type="hidden" name="login" value="1">
         <button type="submit" class="btn">Login</button>
       </form>
 
-      <form id="registerForm">
+      <!-- Register Form -->
+      <form id="registerForm" method="POST" action="">
         <div class="input-group">
-          <label for="registerName">👤 Full Name</label>
-          <input id="registerName" type="text" placeholder="Enter full name" required />
+          <label for="registerName"><i class="fas fa-user"></i> Full Name</label>
+          <input id="registerName" name="fullname" type="text" placeholder="Enter full name" required />
         </div>
 
         <div class="input-group">
-          <label for="registerEmail">📧 Email</label>
-          <input id="registerEmail" type="email" placeholder="Enter your email" required />
+          <label for="registerEmail"><i class="fas fa-envelope"></i> Email</label>
+          <input id="registerEmail" name="email" type="email" placeholder="Enter your email" required />
         </div>
 
         <div class="input-group">
-          <label for="registerPassword">🔒 Password</label>
-          <input id="registerPassword" type="password" placeholder="Create password" required />
+          <label for="registerPassword"><i class="fas fa-key"></i> Password</label>
+          <input id="registerPassword" name="password" type="password" placeholder="Create password (min. 6 characters)" required />
         </div>
 
         <div class="input-group">
-          <label for="registerPlan">🎯 Membership Plan</label>
-          <select id="registerPlan" required>
-            <option value="">Select Plan</option>
-            <option>Basic - ₱500/month</option>
-            <option>Standard - ₱900/month</option>
-            <option>Premium - ₱1,500/month</option>
+          <label for="registerRole"><i class="fas fa-user-tag"></i> Role</label>
+          <select id="registerRole" name="role" required>
+            <option value="">Select Role</option>
+            <option value="admin">👑 Admin - Full access</option>
+            <option value="frontdesk">🏪 Front Desk - Manage members & payments</option>
+            <option value="coach">🏋️ Coach - View members & schedules</option>
           </select>
         </div>
 
+        <input type="hidden" name="register" value="1">
         <button type="submit" class="btn">Register</button>
       </form>
 
-      <div id="messageBox" class="message success"></div>
-      <p class="note">⚡ Front-end template only. Connect this to your database later.</p>
+      <!-- Message Box -->
+      <?php if ($message): ?>
+      <div id="messageBox" class="message <?php echo $message_type; ?> show">
+        <?php echo $message; ?>
+      </div>
+      <?php else: ?>
+      <div id="messageBox" class="message"></div>
+      <?php endif; ?>
+      
+      <p class="note">
+        <i class="fas fa-info-circle"></i> 
+        <strong>Role Access:</strong>
+        <span class="role-badge role-admin">Admin</span> - Full access
+        <span class="role-badge role-frontdesk">Front Desk</span> - Manage members & payments
+        <span class="role-badge role-coach">Coach</span> - View members & schedules
+      </p>
     </div>
   </div>
 
@@ -377,8 +572,10 @@
     const messageBox = document.getElementById("messageBox");
 
     function showForm(type) {
-      messageBox.style.display = "none";
-      messageBox.className = "message success";
+      if (messageBox) {
+        messageBox.style.display = "none";
+        messageBox.className = "message";
+      }
 
       if (type === "login") {
         loginForm.classList.add("active");
@@ -393,31 +590,23 @@
       }
     }
 
-    loginForm.addEventListener("submit", function(e) {
-      e.preventDefault();
-      messageBox.style.display = "block";
-      messageBox.className = "message success";
-      messageBox.textContent = "✅ Login successful! Redirecting to dashboard...";
-      
-      // Simulate redirect after 2 seconds
-      setTimeout(() => {
-        window.location.href = "admin_dashboard.html";
-      }, 2000);
-    });
-
-    registerForm.addEventListener("submit", function(e) {
-      e.preventDefault();
-      messageBox.style.display = "block";
-      messageBox.className = "message success";
-      messageBox.textContent = "✅ Registration successful! Account created. Redirecting to login...";
-      registerForm.reset();
-      
-      // Switch to login form after 2 seconds
-      setTimeout(() => {
-        showForm('login');
+    // Clear message when switching tabs
+    function clearMessage() {
+      if (messageBox) {
         messageBox.style.display = "none";
-      }, 2000);
-    });
+        messageBox.className = "message";
+      }
+    }
+
+    // Auto-hide message after 5 seconds
+    <?php if ($message): ?>
+    setTimeout(function() {
+      var msgBox = document.getElementById('messageBox');
+      if (msgBox) {
+        msgBox.style.display = 'none';
+      }
+    }, 5000);
+    <?php endif; ?>
   </script>
 
 </body>
