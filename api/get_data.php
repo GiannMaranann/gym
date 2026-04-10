@@ -74,25 +74,25 @@ switch ($type) {
     break;
         
     case 'application':
-        // Get application details
         $sql = "SELECT * FROM applications WHERE id = ?";
-        $application = getRecord($sql, [$id], "i");
+        $app = getRecord($sql, [$id], "i");
         
-        if ($application) {
+        if ($app) {
             $response['success'] = true;
-            $response['title'] = "Application Details - " . htmlspecialchars($application['fullname']);
+            $response['title'] = "Application Details - " . htmlspecialchars($app['fullname']);
             $response['items'] = [
-                ['label' => 'Applicant Name', 'value' => htmlspecialchars($application['fullname'])],
-                ['label' => 'Email', 'value' => htmlspecialchars($application['email'])],
-                ['label' => 'Phone', 'value' => htmlspecialchars($application['phone'])],
-                ['label' => 'Interest', 'value' => htmlspecialchars($application['interest'])],
-                ['label' => 'Price', 'value' => '₱' . number_format($application['price'], 2)],
-                ['label' => 'Application Date', 'value' => date('Y-m-d', strtotime($application['submitted_at']))],
-                ['label' => 'Status', 'value' => ucfirst($application['status'])],
-                ['label' => 'Message', 'value' => nl2br(htmlspecialchars($application['message'] ?? 'No message provided'))]
+                ['label' => 'Full Name', 'value' => htmlspecialchars($app['fullname'])],
+                ['label' => 'Email', 'value' => htmlspecialchars($app['email'])],
+                ['label' => 'Phone', 'value' => htmlspecialchars($app['phone'])],
+                ['label' => 'Interest', 'value' => htmlspecialchars($app['interest'])],
+                ['label' => 'Price', 'value' => '₱' . number_format($app['price'], 2)],
+                ['label' => 'Message', 'value' => nl2br(htmlspecialchars($app['message'] ?? 'No message'))],
+                ['label' => 'Status', 'value' => ucfirst($app['status'])],
+                ['label' => 'Submitted', 'value' => date('Y-m-d H:i:s', strtotime($app['submitted_at']))],
+                ['label' => 'Admin Notes', 'value' => nl2br(htmlspecialchars($app['admin_notes'] ?? 'No notes'))]
             ];
         }
-        break;
+    break;
         
     default:
         $response['error'] = 'Invalid type';
